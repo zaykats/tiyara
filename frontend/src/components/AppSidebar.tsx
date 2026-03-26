@@ -21,8 +21,8 @@ export function AppSidebar() {
 
   const mainItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "My Sessions", url: "/dashboard", icon: MessageSquare },
-    { title: "Settings", url: "/dashboard", icon: Settings },
+    { title: "My Sessions", url: "/sessions", icon: MessageSquare },
+    { title: "Settings", url: "/settings", icon: Settings },
   ];
 
   const showUpload = user?.role === "engineer" || user?.role === "supervisor";
@@ -86,6 +86,14 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-2 border-t border-sidebar-border">
+        {!collapsed && user && (
+          <div className="px-4 py-2 mb-1">
+            <p className="text-xs text-foreground font-medium truncate">{user.full_name}</p>
+            <span className="inline-flex items-center px-1.5 py-0.5 mt-1 text-[9px] font-mono-tech tracking-wider border border-primary/30 text-primary/70 bg-primary/5">
+              {user.role?.toUpperCase()}
+            </span>
+          </div>
+        )}
         <button
           onClick={logout}
           className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-destructive transition-colors w-full min-h-[44px] mx-1"

@@ -18,7 +18,7 @@ from app.rag.retrieval import retrieve_amm_chunks, retrieve_case_history
 from app.sessions.service import get_message_history, get_session, save_message
 
 
-_openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+_openai = AsyncOpenAI(api_key=settings.API_KEY, base_url=settings.API_BASE_URL)
 
 
 def _try_parse_structured(text: str) -> dict | None:
@@ -64,6 +64,7 @@ async def stream_chat_response(
         excel_pattern_summary=session.excel_pattern_summary,
         session_problem_description=session.problem_description,
         engine_type=session.engine_type,
+        is_first_message=len(request.conversation_history) == 0,
     )
 
     # ── Persist user message ──────────────────────────────────────────────────
@@ -80,7 +81,7 @@ async def stream_chat_response(
     # ── Stream ────────────────────────────────────────────────────────────────
     full_response = ""
     stream = await _openai.chat.completions.create(
-        model=settings.OPENAI_MODEL,
+        model=settings.MODEL,
         max_tokens=4096,
         messages=[{"role": "system", "content": system_prompt}] + history,
         stream=True,
@@ -139,7 +140,7 @@ async def enrich_resolved_session(session_id: uuid.UUID) -> None:
             )
 
             resp = await _openai.chat.completions.create(
-                model=settings.OPENAI_MODEL,
+                model=settings.MODEL,
                 max_tokens=1500,
                 messages=[{"role": "user", "content": prompt}],
             )

@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { apiFetch, sseStream } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { SkeletonCard } from "@/components/SkeletonCard";
@@ -82,14 +85,24 @@ function TypingIndicator() {
   );
 }
 
+function extractSuggestions(content: string): { clean: string; suggestions: string[] } {
+  const match = content.match(/^SUGGESTIONS:\s*(.+)$/m);
+  if (!match) return { clean: content, suggestions: [] };
+  const suggestions = match[1].split("|").map((s) => s.trim()).filter(Boolean);
+  const clean = content.replace(/\nSUGGESTIONS:.*$/m, "").trimEnd();
+  return { clean, suggestions };
+}
+
 export default function ChatPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [session, setSession] = useState<SessionData | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingContentRef = useRef("");
 
@@ -99,7 +112,32 @@ export default function ChatPage() {
       if (res.ok) {
         const data: SessionData = await res.json();
         setSession(data);
-        setMessages(data.messages || []);
+        const existingMessages = data.messages || [];
+        setMessages(existingMessages);
+
+        // Auto-trigger full diagnosis on fresh sessions
+        if (existingMessages.length === 0) {
+          const autoPrompt = `Analyze the reported fault and maintenance history. Follow the response format defined in your instructions exactly. Be concise — the full response should be scannable in under 2 minutes. No preamble, no repetition.`;
+
+          setStreaming(true);
+          streamingContentRef.current = "";
+          setMessages([{ role: "assistant", content: "" }]);
+
+          sseStream(
+            "/chat",
+            { session_id: sessionId, user_message: autoPrompt, conversation_history: [] },
+            (text) => {
+              streamingContentRef.current += text;
+              setMessages([{ role: "assistant", content: streamingContentRef.current }]);
+            },
+            () => {
+              setStreaming(false);
+              const { clean, suggestions } = extractSuggestions(streamingContentRef.current);
+              setSuggestions(suggestions);
+              setMessages([{ role: "assistant", content: clean }]);
+            }
+          );
+        }
       }
     }).finally(() => setLoading(false));
   }, [sessionId]);
@@ -114,6 +152,7 @@ export default function ChatPage() {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
+    setSuggestions([]);
     setStreaming(true);
     streamingContentRef.current = "";
 
@@ -135,17 +174,13 @@ export default function ChatPage() {
       },
       () => {
         setStreaming(false);
-        const content = streamingContentRef.current;
-        try {
-          if (content.trim().startsWith('{"type":"step_guide"') || content.trim().startsWith('{ "type": "step_guide"')) {
-            const parsed = JSON.parse(content);
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = { role: "assistant", content, structured_content: parsed };
-              return updated;
-            });
-          }
-        } catch {}
+        const { clean, suggestions } = extractSuggestions(streamingContentRef.current);
+        setSuggestions(suggestions);
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: clean };
+          return updated;
+        });
       }
     );
   };
@@ -163,6 +198,7 @@ export default function ChatPage() {
   };
 
   const isResolved = session?.status === "resolved";
+  const canResolve = user?.role === "engineer" || user?.role === "supervisor";
 
   if (loading) {
     return (
@@ -223,18 +259,18 @@ export default function ChatPage() {
             )}
 
             {/* Resolve button */}
-            {!isResolved ? (
+            {isResolved ? (
+              <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-success bg-success/5 border border-success/20">
+                <CheckCircle className="w-4 h-4" /> Session Resolved
+              </div>
+            ) : canResolve ? (
               <button
                 onClick={handleResolve}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm border border-success/20 text-success hover:bg-success/5 transition-all min-h-[48px]"
               >
                 <CheckCircle className="w-4 h-4" /> Mark Resolved
               </button>
-            ) : (
-              <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-success bg-success/5 border border-success/20">
-                <CheckCircle className="w-4 h-4" /> Session Resolved
-              </div>
-            )}
+            ) : null}
           </div>
         </aside>
 
@@ -273,8 +309,31 @@ export default function ChatPage() {
                   }`}>
                     {msg.role === "assistant" && msg.structured_content?.type === "step_guide" ? (
                       <StepGuide data={msg.structured_content} />
+                    ) : msg.role === "assistant" ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({children}) => <h1 className="text-base font-bold text-foreground mt-4 mb-2 first:mt-0">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-sm font-bold text-foreground mt-4 mb-1.5 first:mt-0 border-b border-border/40 pb-1">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-sm font-semibold text-foreground mt-3 mb-1">{children}</h3>,
+                          p: ({children}) => <p className="text-sm text-muted-foreground leading-relaxed mb-2 last:mb-0">{children}</p>,
+                          ul: ({children}) => <ul className="space-y-1 mb-2 ml-3">{children}</ul>,
+                          ol: ({children}) => <ol className="space-y-1 mb-2 ml-3 list-decimal list-inside">{children}</ol>,
+                          li: ({children}) => <li className="text-sm text-muted-foreground flex gap-2"><span className="text-primary/50 mt-1 shrink-0">•</span><span>{children}</span></li>,
+                          strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+                          code: ({children}) => <code className="px-1.5 py-0.5 text-[11px] font-mono bg-muted border border-border text-secondary">{children}</code>,
+                          pre: ({children}) => <pre className="bg-muted border border-border p-3 text-xs font-mono overflow-x-auto mb-2 text-muted-foreground">{children}</pre>,
+                          blockquote: ({children}) => <blockquote className="border-l-2 border-primary/30 pl-3 mb-2 text-sm text-muted-foreground italic">{children}</blockquote>,
+                          hr: () => <hr className="border-border/40 my-3" />,
+                          table: ({children}) => <div className="overflow-x-auto mb-2"><table className="w-full text-xs border-collapse">{children}</table></div>,
+                          th: ({children}) => <th className="px-3 py-2 text-left font-mono-tech text-[10px] text-secondary tracking-wider border border-border bg-muted/40">{children}</th>,
+                          td: ({children}) => <td className="px-3 py-2 text-muted-foreground border border-border/50 text-xs">{children}</td>,
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
                     )}
                     {msg.role === "assistant" && !streaming && msg.content && (
                       <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30">
@@ -296,6 +355,19 @@ export default function ChatPage() {
 
           {/* Input bar */}
           <div className="border-t border-border p-4">
+            {suggestions.length > 0 && !streaming && !isResolved && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setInput(s); setSuggestions([]); }}
+                    className="px-3 py-1.5 text-xs text-muted-foreground border border-border hover:border-primary/40 hover:text-foreground transition-colors text-left"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
             {isResolved && (
               <div className="flex items-center justify-center gap-2 px-4 py-2 mb-3 text-xs font-mono-tech text-success/60 tracking-wider bg-success/5 border border-success/10">
                 <CheckCircle className="w-3 h-3" /> SESSION RESOLVED — INPUT DISABLED

@@ -1,6 +1,6 @@
 import { toast } from "@/hooks/use-toast";
 
-const BASE_URL = "";
+const BASE_URL = "http://127.0.0.1:8080";
 
 let accessToken: string | null = localStorage.getItem("access_token");
 let refreshToken: string | null = localStorage.getItem("refresh_token");

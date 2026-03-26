@@ -38,6 +38,7 @@ class SessionResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

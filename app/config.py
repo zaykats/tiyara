@@ -15,9 +15,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # OpenAI
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o"
+    # AI provider
+    API_KEY: str = ""
+    MODEL: str = "grok-3-fast-beta"
+    API_BASE_URL: str = "https://api.x.ai/v1"
 
     # Embeddings
     EMBEDDING_MODEL: str = "BAAI/bge-base-en-v1.5"

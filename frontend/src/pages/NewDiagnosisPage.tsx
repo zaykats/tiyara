@@ -69,21 +69,18 @@ export default function NewDiagnosisPage() {
       }
 
       const session = await res1.json();
-      const formData = new FormData();
-      formData.append("file", file);
 
-      const res2 = await apiFetch(`/sessions/${session.id}/upload-excel`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res2.ok) {
-        toast({ title: "Diagnosis session created" });
-        navigate(`/chat/${session.id}`);
-      } else {
-        toast({ title: "Error uploading file", variant: "destructive" });
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        await apiFetch(`/sessions/${session.id}/upload-excel`, { method: "POST", body: formData });
       }
-    } catch {} finally {
+
+      toast({ title: "Diagnosis session created" });
+      navigate(`/chat/${session.id}`);
+    } catch (err) {
+      toast({ title: "Unexpected error", description: String(err), variant: "destructive" });
+    } finally {
       setLoading(false);
     }
   };

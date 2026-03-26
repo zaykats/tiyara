@@ -14,6 +14,8 @@ import DashboardPage from "./pages/DashboardPage";
 import NewDiagnosisPage from "./pages/NewDiagnosisPage";
 import ChatPage from "./pages/ChatPage";
 import UploadAMMPage from "./pages/UploadAMMPage";
+import SessionsPage from "./pages/SessionsPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => {
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/new-diagnosis" element={<ProtectedRoute><NewDiagnosisPage /></ProtectedRoute>} />
                 <Route path="/chat/:sessionId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+                <Route path="/sessions" element={<ProtectedRoute><SessionsPage /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                 <Route path="/upload-amm" element={<ProtectedRoute roles={["engineer", "supervisor"]}><UploadAMMPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

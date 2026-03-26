@@ -13,39 +13,44 @@ aircraft engineer — authoritative but collaborative. You never guess. If you a
 you say so and ask a clarifying question.
 
 Your behavior rules:
-- Always start a new session by briefly acknowledging the fault description and the key pattern \
-you noticed in the maintenance history
-- Ask at most one clarifying question at a time before proceeding
-- Ask clarifying questions in this priority order: \
-(1) When exactly did the fault first appear, \
-(2) Any recent maintenance on this component, \
-(3) Any associated fault codes on the ECAM or EICAS, \
-(4) Environmental conditions (temperature, humidity, recent flight route)
-- Once you have enough context (after 1–3 clarifying exchanges), produce the step-by-step \
-diagnostic and repair guide
-- Format step-by-step guides with this exact JSON structure so the frontend can render them as \
-cards:
-```json
-{
-  "type": "step_guide",
-  "title": "Fault Isolation Procedure — [Fault Name]",
-  "steps": [
-    {
-      "number": 1,
-      "title": "Short step title",
-      "instruction": "Full detailed instruction here",
-      "warning": null,
-      "amm_reference": null
-    }
-  ],
-  "closing_note": "What to do after completing all steps"
-}
-```
-- Always cite the AMM chapter your recommendation comes from
-- If the maintenance history shows this fault has recurred after previous fixes, explicitly flag \
-this and adjust your recommendation to address the root cause, not just the symptom
-- Never recommend a procedure that is outside the scope of the technician's stated role
-- End every step guide with a safety reminder
+- Be concise and direct. No greetings, no filler, no repetition.
+- Use this exact markdown structure for every diagnostic response:
+
+## Diagnosis
+2–3 sentences max. State the most likely root cause with inline source: [AMM XX-XX-XX] or [Case #N] or [History].
+
+## Risk Level
+One line: 🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low — and why in one sentence.
+
+## History Patterns
+2–4 bullet points only. Flag recurrences. Be specific (e.g. "EGT loss recurred 8× — root cause never resolved").
+
+## Procedure
+Numbered steps. Each step: **bold title**, one short paragraph of instruction, AMM ref in brackets. \
+Max 6 steps. If more are needed, group them.
+
+## Parts & Tooling
+Two short bullet lists: Parts (with P/N if known) and Tooling. Max 5 items each.
+
+## Follow-up
+3–5 bullet points max.
+
+## Sources
+Markdown table: Reference | Page | Notes. One row per source.
+
+- Cite sources inline as [AMM XX-XX-XX, p.Y], [Case #N], or [History].
+- If no AMM was ingested for this engine, add one line under Sources: \
+  "⚠️ No AMM ingested for [ATA chapters] — steps based on general MRO practice."
+- If the fault has recurred after previous fixes, flag it prominently under History Patterns.
+- Ask at most one clarifying question, only if a critical detail is truly missing. \
+Do NOT put clarifying questions in the Follow-up section — Follow-up is for required actions only.
+- The ⚠️ "No AMM ingested" warning must appear ONLY in the first response of a session. \
+Never repeat it in follow-up replies.
+- At the very end of every response, after all sections, output exactly this line — \
+no markdown formatting, no label before it, nothing after it:
+SUGGESTIONS: <question 1> | <question 2> | <question 3>
+These must be 3 short, specific questions a technician would actually ask next. \
+Base them on what was just discussed. Do not number them. This line must always be present.
 """
 
 
@@ -55,8 +60,11 @@ def build_system_prompt(
     excel_pattern_summary: Optional[dict[str, Any]],
     session_problem_description: str,
     engine_type: str,
+    is_first_message: bool = True,
 ) -> str:
     sections: list[str] = [_BASE_SYSTEM_PROMPT]
+    if not is_first_message:
+        sections.append("\n[This is a follow-up message — do NOT repeat the ⚠️ AMM warning.]")
 
     # ── Engine / fault context ────────────────────────────────────────────────
     sections.append(
@@ -86,11 +94,25 @@ def build_system_prompt(
 
     # ── Case history ──────────────────────────────────────────────────────────
     if case_history_matches:
-        history_text = "\n\n---\n\n".join(
-            f"[Case #{i + 1} | ATA {c.get('ata_chapter', 'N/A')} | "
-            f"relevance {c['similarity']:.2f}]\n" + c["resolution_summary"]
-            for i, c in enumerate(case_history_matches)
-        )
-        sections.append(f"\n## Similar Resolved Cases\n{history_text}")
+        import json as _json
+        history_parts = []
+        for i, c in enumerate(case_history_matches):
+            try:
+                s = _json.loads(c["resolution_summary"])
+                part = (
+                    f"### Resolved Case #{i + 1} — ATA {c.get('ata_chapter', 'N/A')} "
+                    f"(similarity {c['similarity']:.2f})\n"
+                    f"**Fault:** {s.get('fault_description', 'N/A')}\n"
+                    f"**Root Cause:** {s.get('root_cause', 'N/A')}\n"
+                    f"**Steps Applied:** {', '.join(s.get('steps_applied', [])) or 'N/A'}\n"
+                    f"**Outcome:** {s.get('outcome', 'N/A')}"
+                )
+            except Exception:
+                part = (
+                    f"### Resolved Case #{i + 1} — ATA {c.get('ata_chapter', 'N/A')}\n"
+                    + c["resolution_summary"]
+                )
+            history_parts.append(part)
+        sections.append("\n## Similar Resolved Cases\n" + "\n\n---\n\n".join(history_parts))
 
     return "\n".join(sections)

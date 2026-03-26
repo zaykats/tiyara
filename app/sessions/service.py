@@ -40,12 +40,13 @@ async def get_session(
     return session
 
 
-async def list_sessions(db: AsyncSession, user_id: uuid.UUID) -> list[Session]:
-    result = await db.execute(
-        select(Session)
-        .where(Session.user_id == user_id)
-        .order_by(Session.created_at.desc())
-    )
+async def list_sessions(
+    db: AsyncSession, user_id: uuid.UUID, all_users: bool = False
+) -> list[Session]:
+    q = select(Session).order_by(Session.created_at.desc())
+    if not all_users:
+        q = q.where(Session.user_id == user_id)
+    result = await db.execute(q)
     return list(result.scalars().all())
 
 

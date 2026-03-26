@@ -48,7 +48,7 @@ def _safe_value(v: Any) -> Any:
 
 class ExcelParser:
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self._client = AsyncOpenAI(api_key=settings.API_KEY, base_url=settings.API_BASE_URL)
 
     # ── Step 1: Identify the right sheet ──────────────────────────────────────
 
@@ -70,7 +70,7 @@ class ExcelParser:
         )
 
         resp = await self._client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
+            model=settings.MODEL,
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -92,7 +92,7 @@ class ExcelParser:
         )
 
         resp = await self._client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
+            model=settings.MODEL,
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -101,27 +101,40 @@ class ExcelParser:
     # ── Step 3: Pattern analysis ──────────────────────────────────────────────
 
     async def _analyze_patterns(self, records: list[dict]) -> dict:
-        # Cap at 100 records to stay within context limits
-        data_text = json.dumps(records[:100], default=str, indent=2)
+        # Cap at 50 records and strip to key fields to keep prompt small
+        key_fields = ["fault_description", "component", "date", "action_taken", "status"]
+        trimmed = [
+            {k: r.get(k) for k in key_fields if r.get(k) is not None}
+            for r in records[:50]
+        ]
+        data_text = json.dumps(trimmed, default=str)
 
         prompt = (
-            "You are an aircraft maintenance expert. Analyze this maintenance history and return "
-            "a JSON object with: "
-            "top_faults (array of top 5 most frequent fault descriptions), "
-            "recurring_components (components that appear more than twice), "
-            "unresolved_patterns (faults that recurred after a fix was applied), "
-            "time_between_recurrences (average days between repeat faults for recurring items), "
-            "and risk_summary (a 2-sentence plain English summary of the biggest concern in this "
-            "history).\n\nMaintenance History:\n" + data_text +
-            "\n\nReturn only a valid JSON object."
+            "Analyze this aircraft maintenance history. "
+            "Return ONLY a compact JSON object with these fields — keep all string values short:\n"
+            '{"top_faults":["<5 most frequent faults>"],'
+            '"recurring_components":["<components appearing 2+ times>"],'
+            '"unresolved_patterns":["<faults that recurred after fix>"],'
+            '"time_between_recurrences":<avg days as number or null>,'
+            '"risk_summary":"<1 sentence max>"}\n\n'
+            "Data:\n" + data_text
         )
 
         resp = await self._client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
-            max_tokens=2000,
+            model=settings.MODEL,
+            max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
-        return _extract_json(resp.choices[0].message.content)
+        try:
+            return _extract_json(resp.choices[0].message.content)
+        except (json.JSONDecodeError, Exception):
+            return {
+                "top_faults": [],
+                "recurring_components": [],
+                "unresolved_patterns": [],
+                "time_between_recurrences": None,
+                "risk_summary": "Pattern analysis unavailable.",
+            }
 
     # ── Public entry point ────────────────────────────────────────────────────
 

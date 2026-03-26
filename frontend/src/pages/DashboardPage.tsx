@@ -13,6 +13,7 @@ interface Session {
   problem_description: string;
   status: string;
   created_at: string;
+  created_by?: string;
 }
 
 function getGreeting() {
@@ -146,6 +147,9 @@ export default function DashboardPage() {
                         <StatusBadge status={session.status} />
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{session.problem_description}</p>
+                      {session.created_by && (
+                        <p className="text-[10px] font-mono-tech text-muted-foreground/40 mt-1">BY {session.created_by.toUpperCase()}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="font-mono-tech text-[10px] text-muted-foreground/50 hidden sm:inline">
