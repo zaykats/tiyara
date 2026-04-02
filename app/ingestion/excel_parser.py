@@ -12,6 +12,7 @@ import math
 from io import BytesIO
 from typing import Any
 
+import httpx
 import pandas as pd
 from openai import AsyncOpenAI
 
@@ -48,7 +49,11 @@ def _safe_value(v: Any) -> Any:
 
 class ExcelParser:
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(api_key=settings.API_KEY, base_url=settings.API_BASE_URL)
+        self._client = AsyncOpenAI(
+            api_key=settings.API_KEY,
+            base_url=settings.API_BASE_URL,
+            http_client=httpx.AsyncClient(verify=False),
+        )
 
     # ── Step 1: Identify the right sheet ──────────────────────────────────────
 

@@ -6,8 +6,15 @@ the call in a thread-pool executor to keep the async event loop free.
 """
 
 import asyncio
+import os
 from functools import lru_cache
 from typing import List
+
+# Force HuggingFace to load from local cache only — avoids SSL errors on
+# corporate networks where huggingface.co is blocked or the cert chain fails.
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 from sentence_transformers import SentenceTransformer
 

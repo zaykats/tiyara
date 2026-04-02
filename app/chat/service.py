@@ -6,6 +6,7 @@ import json
 import uuid
 from typing import AsyncGenerator
 
+import httpx
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +19,14 @@ from app.rag.retrieval import retrieve_amm_chunks, retrieve_case_history
 from app.sessions.service import get_message_history, get_session, save_message
 
 
-_openai = AsyncOpenAI(api_key=settings.API_KEY, base_url=settings.API_BASE_URL)
+# Use verify=False to bypass SSL cert issues on corporate networks where
+# the root CA is not trusted by Python's certificate store.
+_http_client = httpx.AsyncClient(verify=False)
+_openai = AsyncOpenAI(
+    api_key=settings.API_KEY,
+    base_url=settings.API_BASE_URL,
+    http_client=_http_client,
+)
 
 
 def _try_parse_structured(text: str) -> dict | None:
