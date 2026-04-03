@@ -1,5 +1,4 @@
 .env
-tiyara.db
 uploads/
 frontend/node_modules/
 __pycache__/
@@ -10,3 +9,4 @@ dist/
 .pytest_cache/
 frontend/.next/
 frontend/dist/
+
