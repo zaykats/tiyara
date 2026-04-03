@@ -1,6 +1,6 @@
-# TIYARA — Innovation, Technology & Future Vision
+# TIYARA — Afaq (آفاق)
 
-> *Smarter Skies Through Intelligence-Augmented Maintenance*
+> *Where the platform stands today, and where it is going*
 
 ---
 
