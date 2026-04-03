@@ -10,4 +10,3 @@ dist/
 .pytest_cache/
 frontend/.next/
 frontend/dist/
-frontend/tiyara-smarter-skies/
