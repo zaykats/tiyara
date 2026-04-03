@@ -1,8 +1,8 @@
-"""PDF maintenance report generator.
+"""PDF maintenance report generator (bilingual EN/FR).
 
-Produces a professional MRO-style work order report for a completed
-or in-progress diagnostic session, matching the format used in
-real-world aircraft maintenance shops.
+Produces a professional MRO-style diagnostic report.
+Section 04 contains the step-by-step operations sequence extracted
+from the AI conversation's ## Procedure section.
 """
 
 import io
@@ -11,12 +11,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    HRFlowable,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -26,56 +24,32 @@ from reportlab.platypus import (
 
 from app.auth.models import User
 from app.documents.models import CaseHistory
+from app.reports.translations import Lang, t
+from app.reports.utils import (
+    C_ACCENT,
+    C_BORDER,
+    C_DARK,
+    C_FAULT_BG,
+    C_LIGHT_GRAY,
+    C_MID,
+    C_RES_BG,
+    C_ROW_ALT,
+    C_SUCCESS,
+    C_WARNING,
+    C_WHITE,
+    build_styles,
+    doc_footer,
+    extract_steps,
+    fmt_date,
+    get_latest_ai_message,
+    kv4_table,
+    parse_ai_sections,
+    safe_para,
+    section_block,
+    signoff_block,
+    xml_escape,
+)
 from app.sessions.models import Message, Session
-
-# ── Colour palette ─────────────────────────────────────────────────────────────
-_DARK = colors.HexColor("#0d1117")
-_MID = colors.HexColor("#1c2433")
-_ACCENT = colors.HexColor("#2d6af0")
-_LIGHT_GRAY = colors.HexColor("#8b949e")
-_BORDER = colors.HexColor("#e1e4e8")
-_ROW_ALT = colors.HexColor("#f6f8fa")
-_FAULT_BG = colors.HexColor("#fffbf0")
-_RES_BG = colors.HexColor("#f0fff4")
-_SUCCESS = colors.HexColor("#3fb950")
-_WARNING = colors.HexColor("#d29922")
-_WHITE = colors.white
-
-
-def _fmt_date(dt: Optional[datetime]) -> str:
-    if not dt:
-        return "—"
-    return dt.strftime("%d %b %Y  %H:%M UTC")
-
-
-def _xml_escape(text: str) -> str:
-    """Escape characters that would break reportlab's XML parser."""
-    return (
-        text.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace('"', "&quot;")
-            .replace("'", "&#39;")
-    )
-
-
-def _safe_para(text: str, style: ParagraphStyle) -> Paragraph:
-    """Return a Paragraph with XML-escaped content, truncated if very long."""
-    safe = _xml_escape(str(text))
-    if len(safe) > 4000:
-        safe = safe[:4000] + " … [truncated]"
-    return Paragraph(safe, style)
-
-
-def _section_block(
-    story: list,
-    number: str,
-    title: str,
-    section_style: ParagraphStyle,
-) -> None:
-    story.append(Paragraph(f"{number}  {title}", section_style))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=_ACCENT))
-    story.append(Spacer(1, 6))
 
 
 def generate_session_report(
@@ -83,6 +57,7 @@ def generate_session_report(
     messages: list[Message],
     technician: User,
     case_history: Optional[CaseHistory] = None,
+    lang: Lang = "en",
 ) -> bytes:
     """Build and return a PDF maintenance report as raw bytes."""
 
@@ -99,72 +74,27 @@ def generate_session_report(
         subject="Aircraft Maintenance Diagnostic Report",
     )
 
-    base = getSampleStyleSheet()
+    S = build_styles()
+    base_styles = S
 
-    # ── Custom styles ────────────────────────────────────────────────────────
-    S = {
-        "title": ParagraphStyle(
-            "TTitle", parent=base["Normal"],
-            fontSize=20, textColor=_WHITE, alignment=TA_CENTER,
-            fontName="Helvetica-Bold", spaceAfter=3,
-        ),
-        "subtitle": ParagraphStyle(
-            "TSubtitle", parent=base["Normal"],
-            fontSize=8.5, textColor=_LIGHT_GRAY, alignment=TA_CENTER,
-            fontName="Helvetica",
-        ),
-        "header_right": ParagraphStyle(
-            "THeaderRight", parent=base["Normal"],
-            fontSize=9, textColor=_WHITE, alignment=TA_RIGHT,
-            fontName="Helvetica-Bold", leading=14,
-        ),
-        "header_right_sm": ParagraphStyle(
-            "THeaderRightSm", parent=base["Normal"],
-            fontSize=8, textColor=_LIGHT_GRAY, alignment=TA_RIGHT,
-            fontName="Helvetica",
-        ),
-        "section": ParagraphStyle(
-            "TSection", parent=base["Normal"],
-            fontSize=8, textColor=_ACCENT,
-            fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=3,
-        ),
-        "label": ParagraphStyle(
-            "TLabel", parent=base["Normal"],
-            fontSize=7.5, textColor=_LIGHT_GRAY, fontName="Helvetica",
-        ),
-        "body": ParagraphStyle(
-            "TBody", parent=base["Normal"],
-            fontSize=9, textColor=_DARK, leading=14,
-            fontName="Helvetica", spaceAfter=3,
-        ),
-        "mono": ParagraphStyle(
-            "TMono", parent=base["Normal"],
-            fontSize=8, textColor=_DARK, fontName="Courier",
-            leading=12, spaceAfter=2,
-        ),
-        "footer": ParagraphStyle(
-            "TFooter", parent=base["Normal"],
-            fontSize=7, textColor=_LIGHT_GRAY, alignment=TA_CENTER,
-            fontName="Helvetica",
-        ),
-        "signoff_note": ParagraphStyle(
-            "TSignNote", parent=base["Normal"],
-            fontSize=7.5, textColor=_LIGHT_GRAY, fontName="Helvetica-Oblique",
-            spaceAfter=10,
-        ),
-        "status_bar": ParagraphStyle(
-            "TStatusBar", parent=base["Normal"],
-            fontSize=8, textColor=_WHITE, fontName="Helvetica",
-        ),
-        "role_user": ParagraphStyle(
-            "TRoleUser", parent=base["Normal"],
-            fontSize=7, textColor=_WHITE, fontName="Helvetica-Bold",
-        ),
-        "role_ai": ParagraphStyle(
-            "TRoleAI", parent=base["Normal"],
-            fontSize=7, textColor=_WHITE, fontName="Helvetica-Bold",
-        ),
-    }
+    # Build extra inline styles that depend on colours
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.styles import getSampleStyleSheet
+    _base = getSampleStyleSheet()
+
+    status_color = C_SUCCESS if session.status == "resolved" else C_WARNING
+    wo_status_style = ParagraphStyle(
+        "TWOStatus", parent=_base["Normal"], fontSize=9,
+        textColor=status_color, fontName="Helvetica-Bold",
+    )
+    sb_right_style = ParagraphStyle(
+        "TSBRight", parent=_base["Normal"], fontSize=8,
+        textColor=C_WHITE, fontName="Helvetica", alignment=TA_RIGHT,
+    )
+    status_bar_colored = ParagraphStyle(
+        "TStatusColored", parent=_base["Normal"],
+        fontSize=8, textColor=status_color, fontName="Helvetica-Bold",
+    )
 
     story: list = []
     report_number = f"TIY-{str(session.id).upper()[:8]}"
@@ -177,19 +107,19 @@ def generate_session_report(
             Paragraph("TIYARA", S["title"]),
             "",
             Paragraph(
-                f"Report No.<br/><b>{report_number}</b>",
+                f"{t('report_number', lang)}<br/><b>{report_number}</b>",
                 S["header_right"],
             ),
         ],
         [
-            Paragraph("AVIATION MAINTENANCE DIAGNOSTIC REPORT", S["subtitle"]),
+            Paragraph(t("diag_report_title", lang), S["subtitle"]),
             "",
-            Paragraph(_fmt_date(session.created_at), S["header_right_sm"]),
+            Paragraph(fmt_date(session.created_at), S["header_right_sm"]),
         ],
     ]
     header_table = Table(header_data, colWidths=["55%", "5%", "40%"])
     header_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), _DARK),
+        ("BACKGROUND", (0, 0), (-1, -1), C_DARK),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 14),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
@@ -199,23 +129,17 @@ def generate_session_report(
     story.append(header_table)
 
     # Status bar
-    status_color = _SUCCESS if session.status == "resolved" else _WARNING
-    status_p = ParagraphStyle(
-        "TStatusColored", parent=base["Normal"],
-        fontSize=8, textColor=status_color, fontName="Helvetica-Bold",
-    )
     bar_data = [[
-        Paragraph(f"STATUS: {session.status.upper()}", status_p),
-        Paragraph(f"ENGINE: {_xml_escape(session.engine_type)}", S["status_bar"]),
+        Paragraph(f"{t('status', lang)}: {session.status.upper()}", status_bar_colored),
+        Paragraph(f"{t('engine_type', lang)}: {xml_escape(session.engine_type)}", S["status_bar"]),
         Paragraph(
-            f"TECHNICIAN: {_xml_escape(technician.full_name.upper())}",
-            ParagraphStyle("TSBRight", parent=base["Normal"], fontSize=8,
-                           textColor=_WHITE, fontName="Helvetica", alignment=TA_RIGHT),
+            f"{t('technician', lang)}: {xml_escape(technician.full_name.upper())}",
+            sb_right_style,
         ),
     ]]
     bar_table = Table(bar_data, colWidths=["33%", "34%", "33%"])
     bar_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), _MID),
+        ("BACKGROUND", (0, 0), (-1, -1), C_MID),
         ("TOPPADDING", (0, 0), (-1, -1), 7),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
         ("LEFTPADDING", (0, 0), (-1, -1), 16),
@@ -225,43 +149,40 @@ def generate_session_report(
     story.append(bar_table)
     story.append(Spacer(1, 10))
 
-    sec = 0  # section counter
+    sec = 0
 
     # ═══════════════════════════════════════════════════════════════════════════
     # 01 — WORK ORDER INFORMATION
     # ═══════════════════════════════════════════════════════════════════════════
     sec += 1
-    _section_block(story, f"{sec:02d}", "WORK ORDER INFORMATION", S["section"])
+    section_block(story, f"{sec:02d}", t("wo_info", lang), S)
 
     wo_rows = [
-        [
-            Paragraph("Report Number", S["label"]),
-            Paragraph(report_number, S["body"]),
-            Paragraph("Session ID", S["label"]),
-            _safe_para(str(session.id), S["mono"]),
-        ],
-        [
-            Paragraph("Date Opened", S["label"]),
-            Paragraph(_fmt_date(session.created_at), S["body"]),
-            Paragraph("Date Closed / Updated", S["label"]),
-            Paragraph(_fmt_date(session.updated_at), S["body"]),
-        ],
-        [
-            Paragraph("Engine / A/C Type", S["label"]),
-            _safe_para(session.engine_type, S["body"]),
-            Paragraph("Final Status", S["label"]),
-            Paragraph(
-                session.status.upper(),
-                ParagraphStyle("TWOStatus", parent=base["Normal"], fontSize=9,
-                               textColor=status_color, fontName="Helvetica-Bold"),
-            ),
-        ],
+        (t("report_number", lang), report_number,
+         t("session_id", lang), str(session.id)),
+        (t("date_opened", lang), fmt_date(session.created_at),
+         t("date_updated", lang), fmt_date(session.updated_at)),
+        (t("engine_type", lang), session.engine_type,
+         t("status", lang), session.status.upper()),
     ]
-    wo_table = Table(wo_rows, colWidths=["18%", "32%", "18%", "32%"])
+    # Build the table manually to colour the status cell
+    wo_data = [
+        [
+            Paragraph(r[0], S["label"]), safe_para(r[1], S["body"]),
+            Paragraph(r[2], S["label"]), safe_para(r[3], S["body"]),
+        ]
+        for r in wo_rows[:2]
+    ]
+    wo_data.append([
+        Paragraph(wo_rows[2][0], S["label"]), safe_para(wo_rows[2][1], S["body"]),
+        Paragraph(wo_rows[2][2], S["label"]),
+        Paragraph(wo_rows[2][3], wo_status_style),
+    ])
+    wo_table = Table(wo_data, colWidths=["18%", "32%", "18%", "32%"])
     wo_table.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.4, _BORDER),
-        ("BACKGROUND", (0, 0), (0, -1), _ROW_ALT),
-        ("BACKGROUND", (2, 0), (2, -1), _ROW_ALT),
+        ("GRID", (0, 0), (-1, -1), 0.4, C_BORDER),
+        ("BACKGROUND", (0, 0), (0, -1), C_ROW_ALT),
+        ("BACKGROUND", (2, 0), (2, -1), C_ROW_ALT),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ("LEFTPADDING", (0, 0), (-1, -1), 8),
@@ -275,15 +196,15 @@ def generate_session_report(
     # 02 — FAULT REPORTED
     # ═══════════════════════════════════════════════════════════════════════════
     sec += 1
-    _section_block(story, f"{sec:02d}", "FAULT REPORTED", S["section"])
+    section_block(story, f"{sec:02d}", t("fault_reported", lang), S)
 
     fault_table = Table(
-        [[_safe_para(session.problem_description, S["body"])]],
+        [[safe_para(session.problem_description, S["body"])]],
         colWidths=["100%"],
     )
     fault_table.setStyle(TableStyle([
-        ("BOX", (0, 0), (-1, -1), 0.5, _BORDER),
-        ("BACKGROUND", (0, 0), (-1, -1), _FAULT_BG),
+        ("BOX", (0, 0), (-1, -1), 0.5, C_BORDER),
+        ("BACKGROUND", (0, 0), (-1, -1), C_FAULT_BG),
         ("TOPPADDING", (0, 0), (-1, -1), 10),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
         ("LEFTPADDING", (0, 0), (-1, -1), 12),
@@ -296,87 +217,73 @@ def generate_session_report(
     # 03 — PERSONNEL ON RECORD
     # ═══════════════════════════════════════════════════════════════════════════
     sec += 1
-    _section_block(story, f"{sec:02d}", "PERSONNEL ON RECORD", S["section"])
+    section_block(story, f"{sec:02d}", t("personnel", lang), S)
 
     pers_rows = [
-        [
-            Paragraph("Full Name", S["label"]),
-            _safe_para(technician.full_name, S["body"]),
-            Paragraph("Role", S["label"]),
-            _safe_para(technician.role.title(), S["body"]),
-        ],
-        [
-            Paragraph("Company / Operator", S["label"]),
-            _safe_para(technician.company, S["body"]),
-            Paragraph("Email", S["label"]),
-            _safe_para(technician.email, S["body"]),
-        ],
+        (t("full_name", lang), technician.full_name,
+         t("role", lang), technician.role.title()),
+        (t("company", lang), technician.company,
+         t("email", lang), technician.email),
     ]
-    pers_table = Table(pers_rows, colWidths=["18%", "32%", "18%", "32%"])
-    pers_table.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.4, _BORDER),
-        ("BACKGROUND", (0, 0), (0, -1), _ROW_ALT),
-        ("BACKGROUND", (2, 0), (2, -1), _ROW_ALT),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-    ]))
-    story.append(pers_table)
+    story.append(kv4_table(pers_rows, S))
     story.append(Spacer(1, 10))
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # 04 — MAINTENANCE HISTORY PATTERNS  (only if Excel data available)
+    # 04 — OPERATIONS SEQUENCE (extracted from AI ## Procedure section)
     # ═══════════════════════════════════════════════════════════════════════════
-    if session.excel_pattern_summary:
-        sec += 1
-        _section_block(story, f"{sec:02d}", "MAINTENANCE HISTORY PATTERNS", S["section"])
-        summary = session.excel_pattern_summary
-        pat_rows = []
-        if summary.get("top_faults"):
-            pat_rows.append([
-                Paragraph("Top Recurring Faults", S["label"]),
-                _safe_para(", ".join(summary["top_faults"]), S["body"]),
-            ])
-        if summary.get("recurring_components"):
-            pat_rows.append([
-                Paragraph("Recurring Components", S["label"]),
-                _safe_para(", ".join(summary["recurring_components"]), S["body"]),
-            ])
-        if summary.get("unresolved_patterns"):
-            pat_rows.append([
-                Paragraph("Unresolved Patterns", S["label"]),
-                _safe_para(
-                    ", ".join(str(p) for p in summary["unresolved_patterns"]),
-                    S["body"],
-                ),
-            ])
-        if summary.get("risk_summary"):
-            pat_rows.append([
-                Paragraph("Risk Summary", S["label"]),
-                _safe_para(summary["risk_summary"], S["body"]),
-            ])
-        if pat_rows:
-            pat_table = Table(pat_rows, colWidths=["25%", "75%"])
-            pat_table.setStyle(TableStyle([
-                ("GRID", (0, 0), (-1, -1), 0.4, _BORDER),
-                ("BACKGROUND", (0, 0), (0, -1), _ROW_ALT),
+    sec += 1
+    section_block(story, f"{sec:02d}", t("ops_sequence", lang), S)
+
+    ai_content = get_latest_ai_message(messages)
+    procedure_steps: list[dict] = []
+    if ai_content:
+        sections_map = parse_ai_sections(ai_content)
+        procedure_text = sections_map.get("Procedure", "")
+        if procedure_text:
+            procedure_steps = extract_steps(procedure_text)
+
+    if procedure_steps:
+        for step in procedure_steps:
+            instruction_text = xml_escape(step["instruction"])
+            if step.get("details"):
+                detail_lines = "<br/>".join(f"• {xml_escape(d)}" for d in step["details"])
+                instruction_text += "<br/>" + detail_lines
+
+            step_data = [
+                [
+                    Paragraph(step["number"], S["step_num"]),
+                    Paragraph(xml_escape(step["title"]), S["step_title"]),
+                ],
+                [
+                    "",
+                    Paragraph(instruction_text, S["step_body"]),
+                ],
+            ]
+            step_table = Table(step_data, colWidths=["8%", "92%"])
+            step_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (0, 0), C_ACCENT),
+                ("SPAN", (0, 0), (0, 1)),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("TOPPADDING", (0, 0), (-1, -1), 6),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
                 ("LEFTPADDING", (0, 0), (-1, -1), 8),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("BOX", (0, 0), (-1, -1), 0.4, C_BORDER),
+                ("LINEBELOW", (0, 0), (-1, 0), 0.3, C_BORDER),
             ]))
-            story.append(pat_table)
-        story.append(Spacer(1, 10))
+            story.append(step_table)
+            story.append(Spacer(1, 3))
+    else:
+        story.append(safe_para(t("no_procedure", lang), S["body"]))
+
+    story.append(Spacer(1, 10))
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # 0N — AI RESOLUTION SUMMARY  (only if session has been resolved)
+    # 0N — AI RESOLUTION SUMMARY  (only if session resolved)
     # ═══════════════════════════════════════════════════════════════════════════
     if case_history:
         sec += 1
-        _section_block(story, f"{sec:02d}", "AI RESOLUTION SUMMARY", S["section"])
+        section_block(story, f"{sec:02d}", t("ai_resolution_summary", lang), S)
         try:
             res_sum = (
                 json.loads(case_history.resolution_summary)
@@ -387,42 +294,42 @@ def generate_session_report(
             res_sum = {"raw": str(case_history.resolution_summary)}
 
         res_rows = []
-        for key, label in [
-            ("fault_description", "Fault Description"),
-            ("root_cause", "Root Cause"),
-            ("outcome", "Outcome"),
-            ("ata_chapter", "ATA Chapter"),
+        for key, label_key in [
+            ("fault_description", "fault_description"),
+            ("root_cause", "root_cause"),
+            ("outcome", "outcome"),
+            ("ata_chapter", "ata_chapter"),
         ]:
             if res_sum.get(key):
                 res_rows.append([
-                    Paragraph(label, S["label"]),
-                    _safe_para(str(res_sum[key]), S["body"]),
+                    Paragraph(t(label_key, lang), S["label"]),
+                    safe_para(str(res_sum[key]), S["body"]),
                 ])
 
         if res_sum.get("steps_applied"):
             steps = res_sum["steps_applied"]
             if isinstance(steps, list):
                 steps_text = "<br/>".join(
-                    f"{i + 1}.  {_xml_escape(str(s))}" for i, s in enumerate(steps)
+                    f"{i + 1}.  {xml_escape(str(s))}" for i, s in enumerate(steps)
                 )
             else:
-                steps_text = _xml_escape(str(steps))
+                steps_text = xml_escape(str(steps))
             res_rows.append([
-                Paragraph("Steps Applied", S["label"]),
+                Paragraph(t("steps_applied", lang), S["label"]),
                 Paragraph(steps_text, S["mono"]),
             ])
 
         if res_sum.get("raw"):
             res_rows.append([
-                Paragraph("Summary", S["label"]),
-                _safe_para(res_sum["raw"], S["body"]),
+                Paragraph(t("summary", lang), S["label"]),
+                safe_para(res_sum["raw"], S["body"]),
             ])
 
         if res_rows:
             res_table = Table(res_rows, colWidths=["25%", "75%"])
             res_table.setStyle(TableStyle([
-                ("GRID", (0, 0), (-1, -1), 0.4, _BORDER),
-                ("BACKGROUND", (0, 0), (0, -1), _RES_BG),
+                ("GRID", (0, 0), (-1, -1), 0.4, C_BORDER),
+                ("BACKGROUND", (0, 0), (0, -1), C_RES_BG),
                 ("TOPPADDING", (0, 0), (-1, -1), 6),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
                 ("LEFTPADDING", (0, 0), (-1, -1), 8),
@@ -436,20 +343,21 @@ def generate_session_report(
     # 0N — DIAGNOSTIC CONVERSATION TRANSCRIPT
     # ═══════════════════════════════════════════════════════════════════════════
     sec += 1
-    _section_block(story, f"{sec:02d}", "DIAGNOSTIC CONVERSATION TRANSCRIPT", S["section"])
+    section_block(story, f"{sec:02d}", t("transcript", lang), S)
 
     if messages:
+        tech_label = t("technician", lang).upper()
+        ai_label = "TIYARA AI"
         for msg in messages:
             is_user = msg.role == "user"
-            role_label = "TECHNICIAN" if is_user else "TIYARA AI"
-            header_bg = _MID if is_user else _ACCENT
-            role_style = S["role_user"] if is_user else S["role_ai"]
+            role_label = tech_label if is_user else ai_label
+            header_bg = C_MID if is_user else C_ACCENT
 
             header_para = Paragraph(
-                f"  {role_label}  —  {_fmt_date(msg.created_at)}",
-                role_style,
+                f"  {role_label}  —  {fmt_date(msg.created_at)}",
+                S["role_user"] if is_user else S["role_ai"],
             )
-            content_para = _safe_para(msg.content, S["mono"])
+            content_para = safe_para(msg.content, S["mono"])
 
             msg_table = Table(
                 [[header_para], [content_para]],
@@ -463,76 +371,33 @@ def generate_session_report(
                 ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                 ("TOPPADDING", (0, 1), (0, 1), 8),
                 ("BOTTOMPADDING", (0, 1), (0, 1), 8),
-                ("BOX", (0, 0), (-1, -1), 0.4, _BORDER),
+                ("BOX", (0, 0), (-1, -1), 0.4, C_BORDER),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ]))
             story.append(msg_table)
             story.append(Spacer(1, 4))
     else:
-        story.append(Paragraph("No conversation messages recorded.", S["body"]))
+        story.append(safe_para(t("no_messages", lang), S["body"]))
 
     story.append(Spacer(1, 14))
 
     # ═══════════════════════════════════════════════════════════════════════════
     # SIGN-OFF & CERTIFICATION
     # ═══════════════════════════════════════════════════════════════════════════
-    story.append(Paragraph("SIGN-OFF &amp; CERTIFICATION", S["section"]))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=_ACCENT))
+    from reportlab.platypus import HRFlowable
+    story.append(Paragraph(t("signoff_certification", lang), S["section"]))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=C_ACCENT))
     story.append(Spacer(1, 8))
+    story.append(Paragraph(t("signoff_notice", lang), S["signoff_note"]))
 
-    story.append(Paragraph(
-        "I certify that the maintenance described in this report was performed in accordance "
-        "with the applicable Aircraft Maintenance Manual (AMM) procedures and all relevant "
-        "regulatory requirements.",
-        S["signoff_note"],
-    ))
+    signoff_block(story, [
+        t("certifying_technician", lang),
+        t("engineer_supervisor", lang),
+        t("quality_assurance", lang),
+    ], S)
 
-    _line = "_" * 38
-    _date_line = "_" * 16
-    signoff_rows = [
-        [
-            Paragraph("Certifying Technician", S["label"]),
-            Paragraph(_line, S["body"]),
-            Paragraph("Date", S["label"]),
-            Paragraph(_date_line, S["body"]),
-        ],
-        [Paragraph("", S["label"]), Paragraph("", S["body"]),
-         Paragraph("", S["label"]), Paragraph("", S["body"])],
-        [
-            Paragraph("Engineer / Supervisor", S["label"]),
-            Paragraph(_line, S["body"]),
-            Paragraph("Date", S["label"]),
-            Paragraph(_date_line, S["body"]),
-        ],
-        [Paragraph("", S["label"]), Paragraph("", S["body"]),
-         Paragraph("", S["label"]), Paragraph("", S["body"])],
-        [
-            Paragraph("Quality Assurance", S["label"]),
-            Paragraph(_line, S["body"]),
-            Paragraph("Date", S["label"]),
-            Paragraph(_date_line, S["body"]),
-        ],
-    ]
-    signoff_table = Table(signoff_rows, colWidths=["22%", "35%", "10%", "33%"])
-    signoff_table.setStyle(TableStyle([
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
-    ]))
-    story.append(signoff_table)
-    story.append(Spacer(1, 16))
-
-    # ── Footer ────────────────────────────────────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=0.3, color=_LIGHT_GRAY))
-    story.append(Spacer(1, 4))
-    generated_at = datetime.now(timezone.utc).strftime("%d %b %Y  %H:%M UTC")
-    story.append(Paragraph(
-        f"Generated by TIYARA Aviation AI Platform  |  {report_number}  |  "
-        f"{generated_at}  |  CONFIDENTIAL — FOR MAINTENANCE USE ONLY",
-        S["footer"],
-    ))
+    # Footer
+    doc_footer(story, report_number, t("confidential", lang), S)
 
     doc.build(story)
     return buffer.getvalue()
