@@ -1,12 +1,11 @@
 .env
-uploads/
-frontend/node_modules/
+.venv/
+node_modules/
 __pycache__/
 *.pyc
-.venv/
 *.egg-info/
-dist/
-.pytest_cache/
 frontend/.next/
 frontend/dist/
-
+frontend/tiyara-smarter-skies/node_modules/
+.claude/
+=4.2.0
