@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AFAQ — Brand Identity System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --night:        #0b0c10;
+      --vault:        #111318;
+      --panel:        #16181f;
+      --border:       rgba(255,255,255,0.07);
+      --horizon-blue: #1b3a5c;
+      --sky:          #4a8fbf;
+      --sky-light:    #7ab3cc;
+      --amber:        #c8822a;
+      --gold:         #d4a84b;
+      --mist:         #c8dce8;
+      --white:        #f0f4f7;
+      --sand:         #e8d5a8;
+      --ink:          #1a1c24;
+      --text-dim:     rgba(200,220,232,0.45);
+      --text-mid:     rgba(200,220,232,0.70);
+      --text-full:    #f0f4f7;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--night);
+      color: var(--text-full);
+      line-height: 1.6;
+    }
+
+    /* ── UTILITIES ─────────────────────────────────────────────────────────── */
+    .label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--sky);
+      opacity: 0.7;
+    }
+    .section-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--amber);
+      opacity: 0.6;
+    }
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+    .horizon-line {
+      height: 1.5px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--sky) 20%,
+        var(--sky-light) 45%,
+        var(--amber) 75%,
+        transparent 100%);
+    }
+
+    /* ── COVER ─────────────────────────────────────────────────────────────── */
+    #cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 64px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(74,143,191,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(200,130,42,0.06) 0%, transparent 60%),
+        var(--night);
+    }
+
+    /* subtle grid */
+    #cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+    }
+
+    .cover-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+    .cover-top-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cover-top-brand .t-box {
+      width: 32px; height: 32px;
+      background: var(--amber);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 14px;
+      color: var(--night);
+    }
+    .cover-top-brand span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: var(--text-full);
+    }
+    .cover-top-right {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+    }
+
+    .cover-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* THE MAIN LOGO MARK */
+    .logo-mark-large {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .logo-wordmark-en {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(72px, 12vw, 120px);
+      letter-spacing: 0.22em;
+      color: var(--white);
+      line-height: 1;
+      padding-right: 0.22em; /* compensate letter-spacing on last char */
+    }
+    .logo-wordmark-ar {
+      font-family: 'Noto Sans Arabic', sans-serif;
+      font-weight: 300;
+      font-size: clamp(22px, 3.5vw, 36px);
+      color: var(--mist);
+      opacity: 0.5;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+    .logo-horizon {
+      width: clamp(200px, 40vw, 420px);
+      height: 1.5px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--sky) 15%,
+        var(--sky-light) 42%,
+        var(--amber) 72%,
+        transparent 100%);
+      margin: 20px 0 14px;
+    }
+    .logo-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      color: var(--sky);
+      opacity: 0.55;
+      text-transform: uppercase;
+    }
+
+    .cover-tagline {
+      margin-top: 56px;
+      text-align: center;
+    }
+    .cover-tagline p {
+      font-size: 14px;
+      color: var(--text-mid);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+    }
+
+    .cover-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+    .cover-bottom-left p {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+    .cover-bottom-right {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    /* ── SECTIONS ──────────────────────────────────────────────────────────── */
+    .section {
+      padding: 96px 64px;
+      border-top: 1px solid var(--border);
+    }
+    .section.light {
+      background: var(--white);
+      color: var(--ink);
+    }
+    .section.light .label { color: var(--horizon-blue); opacity: 0.8; }
+    .section.light .section-number { color: var(--amber); opacity: 0.8; }
+    .section.light .text-dim { color: rgba(26,28,36,0.55); }
+    .section.light p { color: rgba(26,28,36,0.75); }
+    .section.light h2 { color: var(--ink); }
+    .section.light h3 { color: var(--ink); }
+    .section.light .divider { background: rgba(0,0,0,0.08); }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 64px;
+    }
+    .section-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: var(--text-mid);
+      max-width: 480px;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── 01 THE NAME ───────────────────────────────────────────────────────── */
+    .name-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .name-card {
+      background: var(--panel);
+      padding: 40px 40px;
+    }
+    .name-card.accent {
+      background: linear-gradient(135deg, var(--horizon-blue) 0%, var(--vault) 100%);
+    }
+    .name-card-ar {
+      font-family: 'Noto Sans Arabic', sans-serif;
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 12px;
+      direction: rtl;
+    }
+    .name-card-en {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .name-card-meaning {
+      font-size: 13px;
+      color: var(--text-mid);
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+    }
+    .name-card-meaning strong {
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .name-detail {
+      background: var(--panel);
+      padding: 40px;
+      grid-column: 1 / -1;
+    }
+    .name-detail-row {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 24px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+    .name-detail-row:last-child { border-bottom: none; }
+    .name-detail-key {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--sky);
+      opacity: 0.65;
+      padding-top: 3px;
+    }
+    .name-detail-val {
+      font-size: 14px;
+      color: var(--text-mid);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+    .name-detail-val strong { color: var(--white); font-weight: 500; }
+
+    /* ── 02 COLOR SYSTEM ───────────────────────────────────────────────────── */
+    .color-primary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+    .color-secondary-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+    }
+    .color-swatch {
+      aspect-ratio: 1.4 / 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+      overflow: hidden;
+    }
+    .color-swatch-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .color-swatch-hex {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      opacity: 0.65;
+    }
+    .color-swatch-role {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      opacity: 0.5;
+    }
+
+    /* ── 03 TYPOGRAPHY ─────────────────────────────────────────────────────── */
+    .type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .type-block {
+      background: var(--panel);
+      padding: 40px;
+    }
+    .type-specimen {
+      margin-bottom: 24px;
+    }
+    .type-specimen-text {
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .type-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+    }
+    .type-scale {
+      background: var(--panel);
+      padding: 40px;
+      grid-column: 1 / -1;
+    }
+    .type-scale-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 120px;
+      align-items: center;
+      gap: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .type-scale-row:last-child { border-bottom: none; }
+
+    /* ── 04 LOGO SYSTEM ────────────────────────────────────────────────────── */
+    .logo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .logo-cell {
+      padding: 64px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 280px;
+    }
+    .logo-cell-dark { background: var(--panel); }
+    .logo-cell-night { background: var(--night); }
+    .logo-cell-blue { background: var(--horizon-blue); }
+    .logo-cell-light {
+      background: var(--white);
+      color: var(--ink);
+    }
+    .logo-cell-amber { background: var(--amber); }
+
+    /* small logo mark component */
+    .logo-sm {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+    }
+    .logo-sm-en {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      line-height: 1;
+    }
+    .logo-sm-ar {
+      font-family: 'Noto Sans Arabic', sans-serif;
+      font-weight: 300;
+      opacity: 0.5;
+    }
+    .logo-sm-line {
+      height: 1.5px;
+      background: linear-gradient(90deg,
+        var(--sky) 0%,
+        var(--sky-light) 40%,
+        var(--amber) 80%,
+        transparent 100%);
+      border-radius: 1px;
+    }
+    .logo-sm-sub {
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.2em;
+      opacity: 0.5;
+      color: var(--sky);
+    }
+
+    .logo-cell-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      opacity: 0.4;
+      text-transform: uppercase;
+    }
+
+    /* ── CLEARSPACE ────────────────────────────────────────────────────────── */
+    .clearspace-demo {
+      background: var(--panel);
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .clearspace-box {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .clearspace-guides {
+      position: absolute;
+      inset: -24px;
+      border: 1px dashed rgba(74,143,191,0.35);
+    }
+    .clearspace-guides::before,
+    .clearspace-guides::after {
+      content: '';
+      position: absolute;
+      background: rgba(74,143,191,0.35);
+    }
+    .clearspace-guides::before { top: 50%; left: -32px; right: -32px; height: 1px; }
+    .clearspace-guides::after  { left: 50%; top: -32px; bottom: -32px; width: 1px; }
+
+    /* ── MISUSE ────────────────────────────────────────────────────────────── */
+    .misuse-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .misuse-cell {
+      background: var(--panel);
+      padding: 40px 32px;
+      position: relative;
+    }
+    .misuse-cell::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: #e05252;
+    }
+    .misuse-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: #e05252;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .misuse-badge::before {
+      content: '×';
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .misuse-reason {
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    /* ── HORIZON ANATOMY ───────────────────────────────────────────────────── */
+    .anatomy-container {
+      background: var(--panel);
+      padding: 64px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+    .anatomy-line-wrapper {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+      padding: 40px 0;
+    }
+    .anatomy-gradient-line {
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--sky) 15%,
+        var(--sky-light) 45%,
+        var(--amber) 78%,
+        transparent 100%);
+    }
+    .anatomy-sky-label {
+      position: absolute;
+      left: 15%;
+      top: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--sky);
+      opacity: 0.7;
+    }
+    .anatomy-sky-label::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 14px;
+      width: 1px; height: 16px;
+      background: var(--sky);
+      opacity: 0.4;
+    }
+    .anatomy-amber-label {
+      position: absolute;
+      right: 15%;
+      top: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--amber);
+      opacity: 0.7;
+      text-align: right;
+    }
+    .anatomy-amber-label::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 14px;
+      width: 1px; height: 16px;
+      background: var(--amber);
+      opacity: 0.4;
+    }
+    .anatomy-mid-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--sky-light);
+      opacity: 0.6;
+      white-space: nowrap;
+    }
+
+    /* ── IN-USE MOCKUP ─────────────────────────────────────────────────────── */
+    .mockup-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+    }
+    .mockup-cell {
+      background: var(--panel);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mockup-doc {
+      aspect-ratio: 0.707 / 1; /* A4 */
+      background: var(--vault);
+      border: 1px solid var(--border);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 7px;
+    }
+    .mockup-doc.white {
+      background: #f8f9fb;
+      border-color: #e0e4ea;
+      color: var(--ink);
+    }
+    .mockup-doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .mockup-doc-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+    .mockup-doc-line {
+      height: 1px;
+      background: linear-gradient(90deg, var(--sky) 0%, var(--amber) 100%);
+      margin-bottom: 10px;
+    }
+    .mockup-doc-body { flex: 1; }
+    .mockup-doc-row {
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      margin-bottom: 5px;
+      border-radius: 1px;
+    }
+    .mockup-doc.white .mockup-doc-row {
+      background: rgba(0,0,0,0.07);
+    }
+    .mockup-doc-row.short { width: 60%; }
+    .mockup-cell-label {
+      margin-top: 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+    }
+
+    /* ── SIGN-OFF ───────────────────────────────────────────────────────────── */
+    #signoff {
+      padding: 96px 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 32px;
+      border-top: 1px solid var(--border);
+      background:
+        radial-gradient(ellipse 60% 60% at 50% 100%, rgba(200,130,42,0.05) 0%, transparent 70%),
+        var(--night);
+    }
+    #signoff .horizon-line {
+      width: 240px;
+    }
+    #signoff p {
+      font-size: 13px;
+      color: var(--text-dim);
+      max-width: 400px;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── RESPONSIVE ────────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      #cover { padding: 32px; }
+      .section { padding: 64px 32px; }
+      .name-grid, .type-grid, .logo-grid,
+      .misuse-grid, .mockup-row,
+      .color-primary-row, .color-secondary-row {
+        grid-template-columns: 1fr;
+      }
+      .name-detail { grid-column: 1; }
+      .type-scale { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════════════════════ -->
+<section id="cover">
+  <div class="cover-top">
+    <div class="cover-top-brand">
+      <div class="t-box">T</div>
+      <span>TIYARA</span>
+    </div>
+    <div class="cover-top-right">
+      Brand Identity System &nbsp;/&nbsp; v1.0 &nbsp;/&nbsp; 2026
+    </div>
+  </div>
+
+  <div class="cover-center">
+    <div class="logo-mark-large">
+      <div class="logo-wordmark-en">AFAQ</div>
+      <div class="logo-wordmark-ar">آفاق</div>
+      <div class="logo-horizon"></div>
+      <div class="logo-sub">A Tiyara Document</div>
+    </div>
+    <div class="cover-tagline">
+      <p>Brand identity for the innovation &amp; vision document series</p>
+    </div>
+  </div>
+
+  <div class="cover-bottom">
+    <div class="cover-bottom-left">
+      <p>Prepared for</p>
+      <p style="color:var(--text-full); font-weight:500;">Tiyara — Smarter Skies</p>
+    </div>
+    <div class="cover-bottom-right">
+      <p>github.com/zaykats/tiyara</p>
+      <p>April 2026</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     01 — THE NAME
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="name">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">01</span>
+      <h2 class="section-title">The Name</h2>
+      <p class="section-desc">Every word has a history. Afaq is not a brand invention — it is a real Arabic and Darija word with roots in Moroccan everyday language and classical poetry alike.</p>
+    </div>
+  </div>
+
+  <div class="name-grid">
+    <div class="name-card accent">
+      <div class="name-card-ar">آفاق</div>
+      <div class="name-card-meaning">Classical Arabic — plural of <strong>ufuq (أُفُق)</strong>, meaning a single horizon. Afaq refers to <strong>many horizons</strong> — the full 360° view from altitude.</div>
+    </div>
+    <div class="name-card">
+      <div class="name-card-en">AFAQ</div>
+      <div class="name-card-meaning">In Moroccan Darija, <strong>afaq</strong> is the word used daily for horizon and for the future. "L-mustaqbal w-l-afaq" — the future and the horizons — is a common expression.</div>
+    </div>
+
+    <div class="name-detail">
+      <div class="name-detail-row">
+        <div class="name-detail-key">LANGUAGE</div>
+        <div class="name-detail-val">Classical Arabic &amp; Moroccan Darija. Understood across all Arabic-speaking regions and North Africa without translation.</div>
+      </div>
+      <div class="name-detail-row">
+        <div class="name-detail-key">WHY THIS WORD</div>
+        <div class="name-detail-val">
+          Three reasons it works for this document:
+          <strong>First</strong>, aviation is the literal domain of horizons — every flight has one.
+          <strong>Second</strong>, the document is about what Tiyara can become — its own horizons.
+          <strong>Third</strong>, it ties the product to its Moroccan origin without needing an explanation.
+        </div>
+      </div>
+      <div class="name-detail-row">
+        <div class="name-detail-key">RELATIONSHIP</div>
+        <div class="name-detail-val"><strong>Tiyara</strong> (طيارة = aircraft / aviation) is the product. <strong>Afaq</strong> is the document series brand sitting inside it — the vision arm of the platform identity.</div>
+      </div>
+      <div class="name-detail-row">
+        <div class="name-detail-key">PRONUNCIATION</div>
+        <div class="name-detail-val">AH-faq &nbsp;/&nbsp; آفاق &nbsp;—&nbsp; stress on the first syllable. Clear in English, French, and Arabic.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     02 — COLOR SYSTEM
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="colors">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">02</span>
+      <h2 class="section-title">Color System</h2>
+      <p class="section-desc">The palette is drawn from a single moment: dawn over the Atlas Mountains, seen from a cockpit window approaching Casablanca. Night sky on the left. Sunrise amber on the right. The horizon is the gradient between them.</p>
+    </div>
+  </div>
+
+  <!-- Primary palette -->
+  <div class="color-primary-row" style="margin-bottom:2px;">
+    <div class="color-swatch" style="background:#0b0c10; color:var(--white);">
+      <div class="color-swatch-role">BACKGROUND</div>
+      <div class="color-swatch-name">Night</div>
+      <div class="color-swatch-hex">#0B0C10</div>
+    </div>
+    <div class="color-swatch" style="background:linear-gradient(135deg,#4a8fbf,#c8822a); color:var(--white);">
+      <div class="color-swatch-role">SIGNATURE</div>
+      <div class="color-swatch-name">Horizon</div>
+      <div class="color-swatch-hex">#4A8FBF → #C8822A</div>
+    </div>
+    <div class="color-swatch" style="background:#c8822a; color:var(--white);">
+      <div class="color-swatch-role">PRIMARY ACCENT</div>
+      <div class="color-swatch-name">Atlas Amber</div>
+      <div class="color-swatch-hex">#C8822A</div>
+    </div>
+  </div>
+
+  <!-- Supporting palette -->
+  <div class="color-secondary-row">
+    <div class="color-swatch" style="background:#4a8fbf; color:var(--white); aspect-ratio:auto; min-height:140px;">
+      <div class="color-swatch-role">SECONDARY</div>
+      <div class="color-swatch-name">Sky</div>
+      <div class="color-swatch-hex">#4A8FBF</div>
+    </div>
+    <div class="color-swatch" style="background:#1b3a5c; color:var(--white); aspect-ratio:auto; min-height:140px;">
+      <div class="color-swatch-role">DEEP TONE</div>
+      <div class="color-swatch-name">Midnight</div>
+      <div class="color-swatch-hex">#1B3A5C</div>
+    </div>
+    <div class="color-swatch" style="background:#c8dce8; color:var(--ink); aspect-ratio:auto; min-height:140px;">
+      <div class="color-swatch-role">LIGHT TEXT</div>
+      <div class="color-swatch-name">Mist</div>
+      <div class="color-swatch-hex">#C8DCE8</div>
+    </div>
+    <div class="color-swatch" style="background:#f0f4f7; color:var(--ink); aspect-ratio:auto; min-height:140px;">
+      <div class="color-swatch-role">PAPER / PRINT</div>
+      <div class="color-swatch-name">Cloud</div>
+      <div class="color-swatch-hex">#F0F4F7</div>
+    </div>
+  </div>
+
+  <!-- Color rationale -->
+  <div style="background:var(--panel); padding:40px; margin-top:2px;">
+    <div class="name-detail-row" style="border-color:var(--border);">
+      <div class="name-detail-key">ATLAS AMBER</div>
+      <div class="name-detail-val">The primary accent. Warm, authoritative, decisive. Used for calls-to-action, reference numbers, and the right half of the horizon gradient. It is the color of first light on the Atlas peaks.</div>
+    </div>
+    <div class="name-detail-row" style="border-color:var(--border);">
+      <div class="name-detail-key">SKY BLUE</div>
+      <div class="name-detail-val">Secondary accent. Used for labels, technical monospace elements, the left half of the gradient. Signals precision and altitude. Not corporate blue — specifically aviation blue.</div>
+    </div>
+    <div class="name-detail-row" style="border-color:var(--border);">
+      <div class="name-detail-key">HORIZON GRADIENT</div>
+      <div class="name-detail-val">Sky → Mist → Amber. This gradient is the single most important visual element of the identity. It should appear only as a line — never as a fill or background wash.</div>
+    </div>
+    <div class="name-detail-row" style="border-color:var(--border); border-bottom:none;">
+      <div class="name-detail-key">NIGHT</div>
+      <div class="name-detail-val">The base. Every screen and dark-mode document uses this as background. It is not pure black — it has a very slight blue cast that feels like depth rather than void.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     03 — TYPOGRAPHY
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="type">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">03</span>
+      <h2 class="section-title">Typography</h2>
+      <p class="section-desc">Three type families. Each has a role. They should never be swapped or mixed outside those roles.</p>
+    </div>
+  </div>
+
+  <div class="type-grid" style="margin-bottom:2px;">
+    <!-- Space Grotesk -->
+    <div class="type-block">
+      <div class="label" style="margin-bottom:24px;">Display &amp; UI</div>
+      <div class="type-specimen">
+        <div class="type-specimen-text" style="font-family:'Space Grotesk',sans-serif; font-size:56px; font-weight:700; line-height:1; letter-spacing:-0.01em; color:var(--white);">Afaq</div>
+        <div class="type-specimen-text" style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:300; color:var(--text-mid); margin-top:16px; line-height:1.3;">Aviation intelligence<br />at every horizon.</div>
+      </div>
+      <div class="type-meta">SPACE GROTESK — Geometric sans-serif<br />Weights used: 300, 500, 600, 700</div>
+      <div style="margin-top:16px; font-size:12px; color:var(--text-dim); line-height:1.6; font-weight:300;">Primary typeface. All headings, the wordmark, UI labels, and navigation. Chosen for its geometric precision — the same quality as instrument panel typography — without being cold.</div>
+    </div>
+
+    <!-- Space Mono -->
+    <div class="type-block">
+      <div class="label" style="margin-bottom:24px;">Technical &amp; Reference</div>
+      <div class="type-specimen">
+        <div class="type-specimen-text" style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; line-height:1.2; color:var(--sky);">ATA 72-30<br />REF: AFAQ-001</div>
+        <div class="type-specimen-text" style="font-family:'Space Mono',monospace; font-size:12px; font-weight:400; color:var(--text-dim); margin-top:16px; letter-spacing:0.15em; line-height:1.8;">SESSION ID — 0A3F2C8B<br />VERSION — 1.0.0 — 2026</div>
+      </div>
+      <div class="type-meta">SPACE MONO — Monospaced<br />Weights used: 400, 700</div>
+      <div style="margin-top:16px; font-size:12px; color:var(--text-dim); line-height:1.6; font-weight:300;">All reference numbers, codes, ATA chapters, dates, and technical labels. The monospace signals that a piece of information is a precise, machine-readable value — not prose.</div>
+    </div>
+
+    <!-- Noto Arabic -->
+    <div class="type-block">
+      <div class="label" style="margin-bottom:24px;">Arabic Script</div>
+      <div class="type-specimen">
+        <div class="type-specimen-text" style="font-family:'Noto Sans Arabic',sans-serif; font-size:64px; font-weight:700; line-height:1; color:var(--white); direction:rtl; text-align:right;">آفاق</div>
+        <div class="type-specimen-text" style="font-family:'Noto Sans Arabic',sans-serif; font-size:20px; font-weight:300; color:var(--text-mid); margin-top:16px; direction:rtl; text-align:right; line-height:1.5;">الأفق الذي تسعى إليه طيارة</div>
+      </div>
+      <div class="type-meta">NOTO SANS ARABIC — Arabic script<br />Weights used: 300, 400, 700</div>
+      <div style="margin-top:16px; font-size:12px; color:var(--text-dim); line-height:1.6; font-weight:300;">Used exclusively for Arabic text. Always paired with Space Grotesk in the bilingual lockup. The Arabic is never decorative — it is the actual word.</div>
+    </div>
+
+    <!-- Inter body -->
+    <div class="type-block">
+      <div class="label" style="margin-bottom:24px;">Body &amp; Long-form</div>
+      <div class="type-specimen">
+        <div class="type-specimen-text" style="font-family:'Inter',sans-serif; font-size:16px; font-weight:400; line-height:1.75; color:var(--text-mid); max-width:340px;">Tiyara compresses hours of manual cross-referencing into a structured, auditable conversation — and ends every session with a complete set of shop-ready documents.</div>
+      </div>
+      <div class="type-meta">INTER — Humanist sans-serif<br />Weights used: 300, 400, 500</div>
+      <div style="margin-top:16px; font-size:12px; color:var(--text-dim); line-height:1.6; font-weight:300;">Body copy, descriptions, and any text over 3 lines. More readable than Space Grotesk at small sizes. Never used for headings or labels.</div>
+    </div>
+  </div>
+
+  <!-- Type scale -->
+  <div class="type-scale">
+    <div class="label" style="margin-bottom:24px;">Type Scale</div>
+    <div class="type-scale-row">
+      <div class="type-meta">DISPLAY / 96PX</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:clamp(48px,6vw,96px); font-weight:700; line-height:1; letter-spacing:-0.02em; color:var(--white);">AFAQ</div>
+      <div class="type-meta" style="text-align:right;">700 — cover only</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="type-meta">H1 / 44PX</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:clamp(28px,4vw,44px); font-weight:600; line-height:1.1; color:var(--white);">Color System</div>
+      <div class="type-meta" style="text-align:right;">600 — section title</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="type-meta">H2 / 24PX</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:500; color:var(--white);">Horizon Gradient</div>
+      <div class="type-meta" style="text-align:right;">500 — subsection</div>
+    </div>
+    <div class="type-scale-row">
+      <div class="type-meta">BODY / 14PX</div>
+      <div style="font-family:'Inter',sans-serif; font-size:14px; font-weight:300; color:var(--text-mid); line-height:1.7;">The palette is drawn from a single moment: dawn over the Atlas.</div>
+      <div class="type-meta" style="text-align:right;">300 — prose</div>
+    </div>
+    <div class="type-scale-row" style="border:none;">
+      <div class="type-meta">LABEL / 10PX</div>
+      <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.2em; color:var(--sky);">ATA CHAPTER — 72-30</div>
+      <div class="type-meta" style="text-align:right;">MONO — all caps</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     04 — LOGO SYSTEM
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="logo">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">04</span>
+      <h2 class="section-title">Logo System</h2>
+      <p class="section-desc">The logo has four elements: the Latin wordmark, the Arabic script, the horizon line, and the attribution. The horizon line is the only graphic element — it is never replaced by a shape, icon, or decorative element.</p>
+    </div>
+  </div>
+
+  <!-- Anatomy of the horizon line -->
+  <div class="anatomy-container" style="margin-bottom:2px;">
+    <div class="label">Anatomy — The Horizon Line</div>
+    <div class="anatomy-line-wrapper">
+      <div class="anatomy-sky-label">SKY BLUE — #4A8FBF</div>
+      <div class="anatomy-amber-label">ATLAS AMBER — #C8822A</div>
+      <div class="anatomy-gradient-line"></div>
+      <div class="anatomy-mid-label">GRADIENT — always left-to-right, always fades at both ends</div>
+    </div>
+    <p style="font-size:13px; color:var(--text-dim); text-align:center; max-width:480px; font-weight:300; line-height:1.7;">The line is 1.5px. It always fades to transparent at both ends. It represents the threshold between night sky and sunrise — the moment you can see the horizon from altitude.</p>
+  </div>
+
+  <!-- Logo on different backgrounds -->
+  <div class="logo-grid" style="margin-bottom:2px;">
+
+    <!-- Dark background — primary use -->
+    <div class="logo-cell logo-cell-night">
+      <div class="logo-sm">
+        <div class="logo-sm-en" style="font-size:36px; color:var(--white);">AFAQ</div>
+        <div class="logo-sm-ar" style="font-size:14px; color:var(--mist);">آفاق</div>
+        <div class="logo-sm-line" style="width:120px; margin:10px 0 8px;"></div>
+        <div class="logo-sm-sub" style="font-size:9px;">A TIYARA DOCUMENT</div>
+      </div>
+      <div class="logo-cell-label" style="color:var(--text-dim);">On Night — primary use</div>
+    </div>
+
+    <!-- Panel background -->
+    <div class="logo-cell logo-cell-dark">
+      <div class="logo-sm">
+        <div class="logo-sm-en" style="font-size:36px; color:var(--white);">AFAQ</div>
+        <div class="logo-sm-ar" style="font-size:14px; color:var(--mist);">آفاق</div>
+        <div class="logo-sm-line" style="width:120px; margin:10px 0 8px;"></div>
+        <div class="logo-sm-sub" style="font-size:9px;">A TIYARA DOCUMENT</div>
+      </div>
+      <div class="logo-cell-label" style="color:var(--text-dim);">On Panel — secondary dark</div>
+    </div>
+
+    <!-- Midnight blue -->
+    <div class="logo-cell logo-cell-blue">
+      <div class="logo-sm">
+        <div class="logo-sm-en" style="font-size:36px; color:var(--white);">AFAQ</div>
+        <div class="logo-sm-ar" style="font-size:14px; color:var(--mist);">آفاق</div>
+        <div class="logo-sm-line" style="width:120px; margin:10px 0 8px;"></div>
+        <div class="logo-sm-sub" style="font-size:9px; color:var(--mist);">A TIYARA DOCUMENT</div>
+      </div>
+      <div class="logo-cell-label" style="color:rgba(255,255,255,0.35);">On Midnight — accent backgrounds</div>
+    </div>
+
+    <!-- Light background -->
+    <div class="logo-cell logo-cell-light">
+      <div class="logo-sm">
+        <div class="logo-sm-en" style="font-size:36px; color:var(--ink);">AFAQ</div>
+        <div class="logo-sm-ar" style="font-size:14px; color:var(--ink); opacity:0.45;">آفاق</div>
+        <div class="logo-sm-line" style="width:120px; margin:10px 0 8px;"></div>
+        <div class="logo-sm-sub" style="font-size:9px; color:var(--horizon-blue);">A TIYARA DOCUMENT</div>
+      </div>
+      <div class="logo-cell-label" style="color:rgba(26,28,36,0.4);">On White — print / light mode</div>
+    </div>
+
+    <!-- Wordmark only -->
+    <div class="logo-cell logo-cell-night">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; letter-spacing:0.18em; color:var(--white);">AFAQ</div>
+        <div style="font-family:'Noto Sans Arabic',sans-serif; font-weight:300; font-size:13px; color:var(--mist); opacity:0.45;">آفاق</div>
+      </div>
+      <div class="logo-cell-label" style="color:var(--text-dim); text-align:center;">Wordmark only — no line, no attribution</div>
+    </div>
+
+    <!-- Monochrome -->
+    <div class="logo-cell" style="background:#ffffff;">
+      <div class="logo-sm">
+        <div class="logo-sm-en" style="font-size:36px; color:#000;">AFAQ</div>
+        <div class="logo-sm-ar" style="font-size:14px; color:#000; opacity:0.35;">آفاق</div>
+        <div style="width:120px; height:1.5px; background:#000; opacity:0.25; margin:10px 0 8px;"></div>
+        <div style="font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.2em; color:#000; opacity:0.35;">A TIYARA DOCUMENT</div>
+      </div>
+      <div class="logo-cell-label" style="color:rgba(0,0,0,0.3);">Monochrome — single-color print only</div>
+    </div>
+  </div>
+
+  <!-- Clearspace rule -->
+  <div class="clearspace-demo">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:48px; width:100%;">
+      <div class="label">Clearspace Rule — minimum X = cap height of the wordmark</div>
+      <div class="clearspace-box">
+        <div class="clearspace-guides"></div>
+        <div class="logo-sm">
+          <div class="logo-sm-en" style="font-size:32px; color:var(--white);">AFAQ</div>
+          <div class="logo-sm-ar" style="font-size:13px; color:var(--mist);">آفاق</div>
+          <div class="logo-sm-line" style="width:108px; margin:8px 0 7px;"></div>
+          <div class="logo-sm-sub" style="font-size:9px;">A TIYARA DOCUMENT</div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--text-dim); text-align:center; max-width:400px; font-weight:300; line-height:1.7;">
+        Nothing — no text, no other logo, no decorative element — enters the clearspace zone. The dashed guide represents the minimum boundary.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     05 — IN USE
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="inuse">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">05</span>
+      <h2 class="section-title">In Use</h2>
+      <p class="section-desc">How the Afaq mark appears on the documents it names.</p>
+    </div>
+  </div>
+
+  <div class="mockup-row">
+    <!-- Dark document cover -->
+    <div class="mockup-cell">
+      <div class="mockup-doc">
+        <div>
+          <div class="mockup-doc-header">
+            <div class="mockup-doc-title" style="color:var(--sky);">AFAQ &nbsp;·&nbsp; آفاق</div>
+            <div style="font-family:'Space Mono',monospace; font-size:7px; color:var(--amber); letter-spacing:0.1em;">v1.0</div>
+          </div>
+          <div class="mockup-doc-line"></div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; color:var(--white); margin-bottom:6px; line-height:1.3;">Innovation &amp;<br />Technology</div>
+          <div style="font-family:'Space Mono',monospace; font-size:6px; color:var(--text-dim); letter-spacing:0.1em; margin-bottom:10px;">A TIYARA DOCUMENT</div>
+        </div>
+        <div class="mockup-doc-body">
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row short"></div>
+          <div style="height:10px;"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row short"></div>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-size:6px; color:var(--text-dim); letter-spacing:0.08em;">github.com/zaykats/tiyara</div>
+      </div>
+      <div class="mockup-cell-label">Document cover — dark</div>
+    </div>
+
+    <!-- Light / print version -->
+    <div class="mockup-cell">
+      <div class="mockup-doc white">
+        <div>
+          <div class="mockup-doc-header">
+            <div class="mockup-doc-title" style="color:var(--horizon-blue); font-size:10px;">AFAQ &nbsp;·&nbsp; آفاق</div>
+            <div style="font-family:'Space Mono',monospace; font-size:7px; color:var(--amber); letter-spacing:0.1em;">v1.0</div>
+          </div>
+          <div style="height:1px; background:linear-gradient(90deg,var(--sky),var(--amber)); margin-bottom:8px;"></div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; color:var(--ink); margin-bottom:4px; line-height:1.3;">Innovation &amp;<br />Technology</div>
+          <div style="font-family:'Space Mono',monospace; font-size:6px; color:rgba(26,28,36,0.35); letter-spacing:0.1em; margin-bottom:10px;">A TIYARA DOCUMENT</div>
+        </div>
+        <div class="mockup-doc-body">
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row short"></div>
+          <div style="height:10px;"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row"></div>
+          <div class="mockup-doc-row short"></div>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-size:6px; color:rgba(26,28,36,0.3); letter-spacing:0.08em;">github.com/zaykats/tiyara</div>
+      </div>
+      <div class="mockup-cell-label" style="color:var(--text-dim);">Document cover — print / light</div>
+    </div>
+
+    <!-- PDF report stamp -->
+    <div class="mockup-cell" style="justify-content:center; align-items:center; display:flex; flex-direction:column; gap:24px;">
+      <div style="border:1px solid var(--border); padding:20px 28px; display:inline-flex; flex-direction:column; align-items:center; gap:6px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:22px; letter-spacing:0.18em; color:var(--white);">AFAQ</div>
+        <div style="font-family:'Noto Sans Arabic',sans-serif; font-weight:300; font-size:11px; color:var(--mist); opacity:0.45;">آفاق</div>
+        <div style="width:80px; height:1px; background:linear-gradient(90deg, var(--sky), var(--amber)); margin:4px 0;"></div>
+        <div style="font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.18em; color:var(--sky); opacity:0.55;">TIYARA</div>
+      </div>
+      <div class="mockup-cell-label" style="text-align:center;">PDF stamp / watermark variant</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     06 — MISUSE
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="misuse">
+  <div class="section-header">
+    <div class="section-header-left">
+      <span class="section-number">06</span>
+      <h2 class="section-title">What Not To Do</h2>
+      <p class="section-desc">Six rules. Breaking any of them disconnects the mark from the identity.</p>
+    </div>
+  </div>
+
+  <div class="misuse-grid">
+    <!-- 1 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — stretch or distort</div>
+      <div style="display:flex; align-items:center; justify-content:center; height:80px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:36px; letter-spacing:0.18em; color:var(--white); transform:scaleY(1.6);">AFAQ</div>
+      </div>
+      <div class="misuse-reason">The proportions of the letterforms are fixed. Scaling non-uniformly distorts the geometric nature of Space Grotesk.</div>
+    </div>
+    <!-- 2 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — recolor the wordmark</div>
+      <div style="display:flex; align-items:center; justify-content:center; height:80px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:36px; letter-spacing:0.18em; background:linear-gradient(90deg,#ff6b6b,#ffd93d); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">AFAQ</div>
+      </div>
+      <div class="misuse-reason">The wordmark is white on dark or black on light. The gradient belongs only to the horizon line — never applied to the letterforms.</div>
+    </div>
+    <!-- 3 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — use a different typeface</div>
+      <div style="display:flex; align-items:center; justify-content:center; height:80px;">
+        <div style="font-family:'Times New Roman',serif; font-weight:700; font-size:36px; letter-spacing:0.05em; color:var(--white); font-style:italic;">AFAQ</div>
+      </div>
+      <div class="misuse-reason">The mark is inseparable from Space Grotesk. Any other typeface — serif, script, or system font — is a different identity.</div>
+    </div>
+    <!-- 4 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — replace the horizon line with a shape</div>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80px; gap:6px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; letter-spacing:0.18em; color:var(--white);">AFAQ</div>
+        <div style="width:60px; height:60px; border:1.5px solid var(--amber); border-radius:50%; margin-top:-8px; opacity:0.6;"></div>
+      </div>
+      <div class="misuse-reason">No circles, polygons, wings, or plane icons. The horizon line is the only graphic element the identity uses.</div>
+    </div>
+    <!-- 5 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — use on a busy background</div>
+      <div style="display:flex; align-items:center; justify-content:center; height:80px; background:repeating-linear-gradient(45deg,#1b3a5c,#1b3a5c 4px,#0b0c10 4px,#0b0c10 12px);">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; letter-spacing:0.18em; color:var(--white);">AFAQ</div>
+      </div>
+      <div class="misuse-reason">The logo requires a solid or very clean background. Patterns, photos, and busy gradients destroy the contrast and legibility.</div>
+    </div>
+    <!-- 6 -->
+    <div class="misuse-cell">
+      <div class="misuse-badge">DO NOT — remove the Arabic</div>
+      <div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; height:80px; gap:8px;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; letter-spacing:0.18em; color:var(--white);">AFAQ</div>
+        <div style="width:100px; height:1.5px; background:linear-gradient(90deg,var(--sky),var(--amber));"></div>
+      </div>
+      <div class="misuse-reason">The Arabic script is not optional decoration. It is part of the identity. Removing it strips the word of its origin and meaning.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SIGN-OFF
+══════════════════════════════════════════════════════════════════════════ -->
+<section id="signoff">
+  <div class="logo-sm" style="align-items:center;">
+    <div class="logo-sm-en" style="font-size:28px; color:var(--white); letter-spacing:0.2em;">AFAQ</div>
+    <div class="logo-sm-ar" style="font-size:13px; color:var(--mist); letter-spacing:0.06em;">آفاق</div>
+  </div>
+  <div class="horizon-line"></div>
+  <p>This identity is part of the Tiyara brand system. It should be used exclusively for the innovation, vision, and strategy document series. For the product UI, refer to the Tiyara main design system.</p>
+  <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:var(--text-dim);">
+    TIYARA — SMARTER SKIES &nbsp;/&nbsp; APRIL 2026
+  </div>
+</section>
+
+</body>
+</html>
